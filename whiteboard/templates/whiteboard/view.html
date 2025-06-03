@@ -5,40 +5,138 @@
 {% block extra_css %}
 <style>
     body {
-        background: #f8f9fa;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         overflow: hidden;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-    
-    .toolbar {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 15px;
+      .whiteboard-workspace {
+        display: grid;
+        grid-template-columns: var(--left-panel-width, 300px) 1fr var(--right-panel-width, 300px);
+        grid-template-rows: 80px 1fr 60px;
+        height: 100vh;
+        gap: 15px;
         padding: 15px;
-        margin: 10px;
-        position: fixed;
-        top: 80px;
-        left: 10px;
-        z-index: 1000;
-        width: 280px;
+        grid-template-areas: 
+            "header header header"
+            "left-panel canvas right-panel"
+            "footer footer footer";
+        transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+      .whiteboard-workspace.hide-left {
+        --left-panel-width: 0px;
     }
     
-    .canvas-container {
-        position: fixed;
-        top: 80px;
-        left: 310px;
-        right: 10px;
-        bottom: 10px;
-        background: white;
+    .whiteboard-workspace.hide-left .left-toolbar {
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .whiteboard-workspace.hide-right {
+        --right-panel-width: 0px;
+    }
+    
+    .whiteboard-workspace.hide-right .right-toolbar {
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .whiteboard-workspace.hide-both {
+        --left-panel-width: 0px;
+        --right-panel-width: 0px;
+    }
+    
+    .whiteboard-workspace.hide-both .left-toolbar {
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .whiteboard-workspace.hide-both .right-toolbar {
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .workspace-header {
+        grid-area: header;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
         border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 25px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+      .left-toolbar {
+        grid-area: left-panel;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow-y: auto;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
     }
     
+    .left-toolbar.hidden {
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+      .canvas-container {
+        grid-area: canvas;
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 15px 60px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+      .right-toolbar {
+        grid-area: right-panel;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow-y: auto;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    
+    .right-toolbar.hidden {
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .workspace-footer {
+        grid-area: footer;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 25px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+      
     .tool-section {
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
     
     .tool-section:last-child {
@@ -47,85 +145,191 @@
         padding-bottom: 0;
     }
     
+    .tool-section h6 {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
     .tool-button {
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
-        border: 2px solid #dee2e6;
-        background: white;
-        margin: 2px;
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        background: #ffffff;
+        margin: 3px;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1.1rem;
+        color: #4a5568;
     }
     
     .tool-button:hover {
         border-color: #667eea;
-        background: #f8f9ff;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
     }
     
     .tool-button.active {
         border-color: #667eea;
-        background: #667eea;
+        background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 15px;
     }
     
     .color-button {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        border: 2px solid #dee2e6;
-        margin: 2px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        border: 3px solid transparent;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        position: relative;
     }
     
-    .color-button:hover,
-    .color-button.active {
-        border-color: #333;
+    .color-button:hover {
         transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
     
-    .range-input {
+    .color-button.active {
+        border-color: #2d3748;
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .color-button.active::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-weight: bold;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+    
+    .slider-container {
+        margin: 15px 0;
+    }
+      .range-input {
         width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #e2e8f0, #667eea);
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
     }
     
-    .status-bar {
-        position: fixed;
-        bottom: 10px;
-        left: 10px;
-        right: 10px;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 15px;
-        padding: 10px 20px;
+    .range-input::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .brush-display {
+        text-align: center;
+        margin-top: 10px;
+        font-weight: 600;
+        color: #4a5568;
+    }
+    
+    .action-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .action-btn {
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        z-index: 1000;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .action-btn.primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .action-btn.secondary {
+        background: #f7fafc;
+        color: #4a5568;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .action-btn.danger {
+        background: linear-gradient(135deg, #fc8181, #f56565);
+        color: white;
+    }
+    
+    .action-btn.success {
+        background: linear-gradient(135deg, #68d391, #48bb78);
+        color: white;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .connection-status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1001;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 0.875rem;
+        font-weight: 600;
     }
     
     .online-users {
         display: flex;
-        gap: 10px;
+        gap: 15px;
         align-items: center;
     }
     
     .user-indicator {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
-        background: #28a745;
+        background: #48bb78;
         animation: pulse 2s infinite;
+        box-shadow: 0 0 10px rgba(72, 187, 120, 0.5);
     }
-    
+      
     @keyframes pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
+        100% { opacity: 1; transform: scale(1); }
     }
     
     .cursor-indicator {
@@ -138,123 +342,283 @@
     .cursor-label {
         background: rgba(0, 0, 0, 0.8);
         color: white;
-        padding: 2px 8px;
-        border-radius: 4px;
+        padding: 4px 12px;
+        border-radius: 20px;
         font-size: 12px;
-        margin-top: 15px;
+        margin-top: 20px;
         white-space: nowrap;
+        font-weight: 500;
+    }
+    
+    .brand-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .whiteboard-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-badge.public {
+        background: linear-gradient(135deg, #68d391, #48bb78);
+        color: white;
+    }
+    
+    .status-badge.private {
+        background: linear-gradient(135deg, #a0aec0, #718096);
+        color: white;
+    }
+      .status-badge.view-only {
+        background: linear-gradient(135deg, #f6ad55, #ed8936);
+        color: white;
+    }
+    
+    .panel-toggle {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 30px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 0 10px 10px 0;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1002;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .panel-toggle:hover {
+        transform: translateY(-50%) scale(1.05);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .panel-toggle.left {
+        right: -30px;
+    }
+    
+    .panel-toggle.right {
+        left: -30px;
+        border-radius: 10px 0 0 10px;
+    }
+    
+    .panel-toggle.left.collapsed {
+        position: fixed;
+        left: 15px;
+        right: auto;
+        border-radius: 0 10px 10px 0;
+    }
+    
+    .panel-toggle.right.collapsed {
+        position: fixed;
+        right: 15px;
+        left: auto;
+        border-radius: 10px 0 0 10px;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 1200px) {
+        .whiteboard-workspace {
+            grid-template-columns: 250px 1fr 250px;
+        }
+    }
+    
+    @media (max-width: 992px) {
+        .whiteboard-workspace {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto 1fr auto;
+            grid-template-areas: 
+                "header"
+                "left-panel"
+                "canvas"
+                "footer";
+        }
+        
+        .right-toolbar {
+            display: none;
+        }
+        
+        .left-toolbar {
+            padding: 15px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Toolbar -->
-<div class="toolbar">
-    <div class="tool-section">
-        <h6 class="mb-2"><i class="fas fa-tools me-2"></i>Tools</h6>
-        <div class="d-flex flex-wrap">
-            <button class="tool-button active" data-tool="pen" title="Pen">
-                <i class="fas fa-pen"></i>
-            </button>
-            <button class="tool-button" data-tool="eraser" title="Eraser">
-                <i class="fas fa-eraser"></i>
-            </button>
-            <button class="tool-button" data-tool="line" title="Line">
-                <i class="fas fa-minus"></i>
-            </button>
-            <button class="tool-button" data-tool="rectangle" title="Rectangle">
-                <i class="far fa-square"></i>
-            </button>
-            <button class="tool-button" data-tool="circle" title="Circle">
-                <i class="far fa-circle"></i>
-            </button>
-            <button class="tool-button" data-tool="text" title="Text">
-                <i class="fas fa-font"></i>
-            </button>
-        </div>
-    </div>
-    
-    <div class="tool-section">
-        <h6 class="mb-2"><i class="fas fa-palette me-2"></i>Colors</h6>
-        <div class="d-flex flex-wrap">
-            <div class="color-button active" data-color="#000000" style="background: #000000;" title="Black"></div>
-            <div class="color-button" data-color="#ff0000" style="background: #ff0000;" title="Red"></div>
-            <div class="color-button" data-color="#00ff00" style="background: #00ff00;" title="Green"></div>
-            <div class="color-button" data-color="#0000ff" style="background: #0000ff;" title="Blue"></div>
-            <div class="color-button" data-color="#ffff00" style="background: #ffff00;" title="Yellow"></div>
-            <div class="color-button" data-color="#ff00ff" style="background: #ff00ff;" title="Magenta"></div>
-            <div class="color-button" data-color="#00ffff" style="background: #00ffff;" title="Cyan"></div>
-            <div class="color-button" data-color="#orange" style="background: orange;" title="Orange"></div>
-            <div class="color-button" data-color="#purple" style="background: purple;" title="Purple"></div>
-            <div class="color-button" data-color="#brown" style="background: brown;" title="Brown"></div>
-            <div class="color-button" data-color="#gray" style="background: gray;" title="Gray"></div>
-            <div class="color-button" data-color="#white" style="background: white; border-color: #333;" title="White"></div>
-        </div>
-        <input type="color" id="custom-color" class="form-control form-control-sm mt-2" title="Custom Color">
-    </div>
-    
-    <div class="tool-section">
-        <h6 class="mb-2"><i class="fas fa-sliders-h me-2"></i>Brush Size</h6>
-        <input type="range" class="range-input" id="brush-size" min="1" max="50" value="5">
-        <div class="text-center mt-1"><span id="brush-size-display">5</span>px</div>
-    </div>
-    
-    <div class="tool-section">
-        <h6 class="mb-2"><i class="fas fa-cog me-2"></i>Actions</h6>
-        <div class="d-grid gap-2">
-            <button class="btn btn-outline-secondary btn-sm" id="undo-btn">
-                <i class="fas fa-undo me-1"></i>Undo
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" id="redo-btn">
-                <i class="fas fa-redo me-1"></i>Redo
-            </button>
-            <button class="btn btn-outline-danger btn-sm" id="clear-btn">
-                <i class="fas fa-trash me-1"></i>Clear All
-            </button>
-            {% if can_edit %}
-            <button class="btn btn-success btn-sm" id="save-btn">
-                <i class="fas fa-save me-1"></i>Save
-            </button>
-            {% endif %}
-            <button class="btn btn-primary btn-sm" id="export-btn">
-                <i class="fas fa-download me-1"></i>Export PNG
-            </button>
-        </div>
-    </div>
-</div>
+<!-- Hidden element to pass drawing data to JavaScript -->
+<script id="drawing-data" type="application/json">{{ drawing_data|safe }}</script>
 
-<!-- Canvas Container -->
-<div class="canvas-container">
-    <canvas id="whiteboard-canvas"></canvas>
-</div>
-
-<!-- Status Bar -->
-<div class="status-bar">
-    <div class="d-flex align-items-center">
-        <span class="me-3">
-            <i class="fas fa-info-circle me-1"></i>
+<div class="whiteboard-workspace">
+    <!-- Header -->
+    <div class="workspace-header">
+        <div class="brand-title">
+            <i class="fas fa-paint-brush me-2"></i>
+            Collaborative Whiteboard
+        </div>
+        <div class="whiteboard-title">
+            <i class="fas fa-chalkboard me-2"></i>
             <strong>{{ whiteboard.title }}</strong>
             {% if whiteboard.is_public %}
-                <span class="badge bg-success ms-2">Public</span>
+                <span class="status-badge public">Public</span>
             {% else %}
-                <span class="badge bg-secondary ms-2">Private</span>
+                <span class="status-badge private">Private</span>
             {% endif %}
-        </span>
-        {% if not can_edit %}
-            <span class="badge bg-warning">
-                <i class="fas fa-eye me-1"></i>View Only
-            </span>
-        {% endif %}
+            {% if not can_edit %}
+                <span class="status-badge view-only">View Only</span>
+            {% endif %}
+        </div>
+    </div>    <!-- Left Toolbar -->
+    <div class="left-toolbar" id="left-toolbar">
+        <button class="panel-toggle left" id="left-toggle" title="Hide left panel">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <div class="tool-section">
+            <h6><i class="fas fa-tools me-2"></i>Drawing Tools</h6>
+            <div class="d-flex flex-wrap">
+                <button class="tool-button active" data-tool="pen" title="Pen">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button class="tool-button" data-tool="eraser" title="Eraser">
+                    <i class="fas fa-eraser"></i>
+                </button>
+                <button class="tool-button" data-tool="line" title="Line">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="tool-button" data-tool="rectangle" title="Rectangle">
+                    <i class="far fa-square"></i>
+                </button>
+                <button class="tool-button" data-tool="circle" title="Circle">
+                    <i class="far fa-circle"></i>
+                </button>
+                <button class="tool-button" data-tool="text" title="Text">
+                    <i class="fas fa-font"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-section">
+            <h6><i class="fas fa-palette me-2"></i>Colors</h6>
+            <div class="color-grid">
+                <div class="color-button active" data-color="#000000" style="background: #000000;" title="Black"></div>
+                <div class="color-button" data-color="#ff0000" style="background: #ff0000;" title="Red"></div>
+                <div class="color-button" data-color="#00ff00" style="background: #00ff00;" title="Green"></div>
+                <div class="color-button" data-color="#0000ff" style="background: #0000ff;" title="Blue"></div>
+                <div class="color-button" data-color="#ffff00" style="background: #ffff00;" title="Yellow"></div>
+                <div class="color-button" data-color="#ff00ff" style="background: #ff00ff;" title="Magenta"></div>
+                <div class="color-button" data-color="#00ffff" style="background: #00ffff;" title="Cyan"></div>
+                <div class="color-button" data-color="#orange" style="background: orange;" title="Orange"></div>
+                <div class="color-button" data-color="#purple" style="background: purple;" title="Purple"></div>
+                <div class="color-button" data-color="#brown" style="background: brown;" title="Brown"></div>
+                <div class="color-button" data-color="#gray" style="background: gray;" title="Gray"></div>
+                <div class="color-button" data-color="#white" style="background: white; border: 3px solid #ccc;" title="White"></div>
+            </div>
+            <input type="color" id="custom-color" class="form-control form-control-sm" title="Custom Color">
+        </div>
+        
+        <div class="tool-section">
+            <h6><i class="fas fa-sliders-h me-2"></i>Brush Size</h6>
+            <div class="slider-container">
+                <input type="range" class="range-input" id="brush-size" min="1" max="50" value="5">
+                <div class="brush-display"><span id="brush-size-display">5</span>px</div>
+            </div>
+        </div>
     </div>
-    
-    <div class="online-users">
-        <span class="me-2">Online:</span>
-        <div id="user-indicators"></div>
+
+    <!-- Canvas Container -->
+    <div class="canvas-container">
+        <canvas id="whiteboard-canvas"></canvas>
+        <div id="connection-status" class="connection-status"></div>
+    </div>    <!-- Right Toolbar -->
+    <div class="right-toolbar" id="right-toolbar">
+        <button class="panel-toggle right" id="right-toggle" title="Hide right panel">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        
+        <div class="tool-section">
+            <h6><i class="fas fa-history me-2"></i>History</h6>
+            <div class="action-grid">
+                <button class="action-btn secondary" id="undo-btn">
+                    <i class="fas fa-undo"></i>
+                    Undo
+                </button>
+                <button class="action-btn secondary" id="redo-btn">
+                    <i class="fas fa-redo"></i>
+                    Redo
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-section">
+            <h6><i class="fas fa-cog me-2"></i>Actions</h6>
+            <div class="d-grid gap-2">
+                <button class="action-btn danger" id="clear-btn">
+                    <i class="fas fa-trash me-1"></i>Clear All
+                </button>
+                {% if can_edit %}
+                <button class="action-btn success" id="save-btn">
+                    <i class="fas fa-save me-1"></i>Save
+                </button>
+                {% endif %}
+                <button class="action-btn primary" id="export-btn">
+                    <i class="fas fa-download me-1"></i>Export PNG
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-section">
+            <h6><i class="fas fa-users me-2"></i>Collaboration</h6>
+            <div class="text-center">
+                <p class="mb-2 text-muted small">Real-time collaboration enabled</p>
+                <div class="online-users">
+                    <span class="small">Online:</span>
+                    <div id="user-indicators">
+                        <div class="user-indicator"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    <!-- Footer -->
+    <div class="workspace-footer">
+        <div class="d-flex align-items-center">
+            <span class="small text-muted">
+                <i class="fas fa-keyboard me-1"></i>
+                Shortcuts: Ctrl+Z (Undo), Ctrl+Shift+Z (Redo), Ctrl+S (Save) | 
+                Ctrl+[ (Left Panel), Ctrl+] (Right Panel), Ctrl+\ (Both Panels)
+            </span>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <span class="small text-muted">Last saved: Auto-save active</span>
+            <span id="connection-status" class="small">
+                <span class="badge bg-secondary">🔵 Initializing...</span>
+            </span>
+        </div>
     </div>
 </div>
-
-<!-- WebSocket connection status -->
-<div id="connection-status" class="position-fixed" style="top: 90px; right: 20px; z-index: 1001;"></div>
 {% endblock %}
 
 {% block extra_js %}
@@ -458,18 +822,18 @@ class WhiteboardApp {
             brushSizeDisplay.textContent = this.brushSize;
             this.canvas.freeDrawingBrush.width = this.brushSize;
         });
-        
-        // Action buttons
+          // Action buttons
         document.getElementById('undo-btn').addEventListener('click', () => this.undo());
         document.getElementById('redo-btn').addEventListener('click', () => this.redo());
         document.getElementById('clear-btn').addEventListener('click', () => this.clearCanvas());
         document.getElementById('export-btn').addEventListener('click', () => this.exportCanvas());
         
-        {% if can_edit %}
-        document.getElementById('save-btn').addEventListener('click', () => this.saveWhiteboard());
-        {% endif %}
-        
-        // Keyboard shortcuts
+        // Save button (only if present in DOM)
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveWhiteboard());
+        }
+          // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
                 switch(e.key.toLowerCase()) {
@@ -483,9 +847,11 @@ class WhiteboardApp {
                         break;
                     case 's':
                         e.preventDefault();
-                        {% if can_edit %}
-                        this.saveWhiteboard();
-                        {% endif %}
+                        // Only save if save button exists (user can edit)
+                        const saveBtn = document.getElementById('save-btn');
+                        if (saveBtn) {
+                            this.saveWhiteboard();
+                        }
                         break;
                 }
             }
@@ -626,12 +992,11 @@ class WhiteboardApp {
             this.showSaveStatus(false);
         });
     }
-    
-    showSaveStatus(success) {
+      showSaveStatus(success) {
         const statusEl = document.getElementById('connection-status');
         statusEl.innerHTML = success 
-            ? '<div class="alert alert-success alert-sm">✓ Saved</div>'
-            : '<div class="alert alert-danger alert-sm">✗ Save failed</div>';
+            ? '<span class="badge bg-success">✓ Saved</span>'
+            : '<span class="badge bg-danger">✗ Save failed</span>';
         
         setTimeout(() => {
             statusEl.innerHTML = '';
@@ -677,10 +1042,12 @@ class WhiteboardApp {
         } else {
             console.log('No objects found in data');
         }
-    }
-      loadWhiteboardData() {
+    }    loadWhiteboardData() {
         try {
-            const data = {{ drawing_data|safe }};
+            // Get drawing data from Django template variable
+            const drawingDataElement = document.getElementById('drawing-data');
+            const data = drawingDataElement ? JSON.parse(drawingDataElement.textContent) : null;
+            
             console.log('Loading whiteboard data:', data);
             console.log('Data type:', typeof data);
             console.log('Data has objects:', data && data.objects ? data.objects.length : 'no objects');
@@ -703,19 +1070,18 @@ class WhiteboardApp {
             }));
         }
     }
-    
-    updateConnectionStatus(status) {
+      updateConnectionStatus(status) {
         const statusEl = document.getElementById('connection-status');
         
         switch(status) {
             case 'connected':
-                statusEl.innerHTML = '<div class="alert alert-success alert-sm">🟢 Connected</div>';
+                statusEl.innerHTML = '<span class="badge bg-success">🟢 Connected</span>';
                 break;
             case 'disconnected':
-                statusEl.innerHTML = '<div class="alert alert-warning alert-sm">🟡 Reconnecting...</div>';
+                statusEl.innerHTML = '<span class="badge bg-warning">🟡 Reconnecting...</span>';
                 break;
             case 'error':
-                statusEl.innerHTML = '<div class="alert alert-danger alert-sm">🔴 Connection Error</div>';
+                statusEl.innerHTML = '<span class="badge bg-danger">🔴 Connection Error</span>';
                 break;
         }
     }
@@ -758,18 +1124,161 @@ class WhiteboardApp {
     }
 }
 
+// Panel Toggle Functionality
+class PanelManager {
+    constructor() {
+        this.workspace = document.querySelector('.whiteboard-workspace');
+        this.leftPanel = document.getElementById('left-toolbar');
+        this.rightPanel = document.getElementById('right-toolbar');
+        this.leftToggle = document.getElementById('left-toggle');
+        this.rightToggle = document.getElementById('right-toggle');
+        
+        this.leftHidden = false;
+        this.rightHidden = false;
+        
+        this.initEventListeners();
+        this.initKeyboardShortcuts();
+    }
+    
+    initEventListeners() {
+        // Left panel toggle
+        if (this.leftToggle) {
+            this.leftToggle.addEventListener('click', () => {
+                this.toggleLeftPanel();
+            });
+        }
+        
+        // Right panel toggle
+        if (this.rightToggle) {
+            this.rightToggle.addEventListener('click', () => {
+                this.toggleRightPanel();
+            });
+        }
+    }
+    
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + [ to toggle left panel
+            if ((e.ctrlKey || e.metaKey) && e.key === '[') {
+                e.preventDefault();
+                this.toggleLeftPanel();
+            }
+            
+            // Ctrl/Cmd + ] to toggle right panel
+            if ((e.ctrlKey || e.metaKey) && e.key === ']') {
+                e.preventDefault();
+                this.toggleRightPanel();
+            }
+            
+            // Ctrl/Cmd + \ to toggle both panels
+            if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+                e.preventDefault();
+                this.toggleBothPanels();
+            }
+        });
+    }
+    
+    toggleLeftPanel() {
+        this.leftHidden = !this.leftHidden;
+        
+        if (this.leftHidden) {
+            this.workspace.classList.add('hide-left');
+            this.leftToggle.classList.add('collapsed');
+            this.leftToggle.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            this.leftToggle.title = 'Show left panel';
+        } else {
+            this.workspace.classList.remove('hide-left');
+            this.leftToggle.classList.remove('collapsed');
+            this.leftToggle.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            this.leftToggle.title = 'Hide left panel';
+        }
+        
+        // Update both panels class if needed
+        this.updateBothPanelsClass();
+        
+        // Resize canvas after panel animation
+        setTimeout(() => {
+            if (window.whiteboardApp) {
+                window.whiteboardApp.resizeCanvas();
+            }
+        }, 300);
+    }
+    
+    toggleRightPanel() {
+        this.rightHidden = !this.rightHidden;
+        
+        if (this.rightHidden) {
+            this.workspace.classList.add('hide-right');
+            this.rightToggle.classList.add('collapsed');
+            this.rightToggle.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            this.rightToggle.title = 'Show right panel';
+        } else {
+            this.workspace.classList.remove('hide-right');
+            this.rightToggle.classList.remove('collapsed');
+            this.rightToggle.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            this.rightToggle.title = 'Hide right panel';
+        }
+        
+        // Update both panels class if needed
+        this.updateBothPanelsClass();
+        
+        // Resize canvas after panel animation
+        setTimeout(() => {
+            if (window.whiteboardApp) {
+                window.whiteboardApp.resizeCanvas();
+            }
+        }, 300);
+    }
+    
+    toggleBothPanels() {
+        if (this.leftHidden && this.rightHidden) {
+            // If both are hidden, show both
+            this.showBothPanels();
+        } else {
+            // Otherwise, hide both
+            this.hideBothPanels();
+        }
+    }
+    
+    hideBothPanels() {
+        if (!this.leftHidden) this.toggleLeftPanel();
+        if (!this.rightHidden) this.toggleRightPanel();
+    }
+    
+    showBothPanels() {
+        if (this.leftHidden) this.toggleLeftPanel();
+        if (this.rightHidden) this.toggleRightPanel();
+    }
+    
+    updateBothPanelsClass() {
+        if (this.leftHidden && this.rightHidden) {
+            this.workspace.classList.add('hide-both');
+        } else {
+            this.workspace.classList.remove('hide-both');
+        }
+    }
+}
+
 // Initialize the whiteboard application
 document.addEventListener('DOMContentLoaded', function() {
     window.whiteboardApp = new WhiteboardApp();
+    window.panelManager = new PanelManager();
+    
+    // Show keyboard shortcuts hint
+    console.log('Keyboard shortcuts:');
+    console.log('  Ctrl/Cmd + [ : Toggle left panel');
+    console.log('  Ctrl/Cmd + ] : Toggle right panel');
+    console.log('  Ctrl/Cmd + \\ : Toggle both panels');
 });
 
 // Auto-save every 30 seconds if user can edit
-{% if can_edit %}
-setInterval(() => {
-    if (window.whiteboardApp) {
-        window.whiteboardApp.saveWhiteboard();
-    }
-}, 30000);
-{% endif %}
+const saveBtn = document.getElementById('save-btn');
+if (saveBtn) {
+    setInterval(() => {
+        if (window.whiteboardApp) {
+            window.whiteboardApp.saveWhiteboard();
+        }
+    }, 30000);
+}
 </script>
 {% endblock %}
