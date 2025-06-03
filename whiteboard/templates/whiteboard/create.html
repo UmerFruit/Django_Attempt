@@ -1,0 +1,141 @@
+{% extends 'whiteboard/base.html' %}
+
+{% block title %}Create Whiteboard - Collaborative Whiteboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-plus me-2"></i>Create New Whiteboard
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">
+                                <i class="fas fa-heading me-2"></i>Whiteboard Title
+                            </label>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="title" 
+                                   name="title" 
+                                   placeholder="Enter a descriptive title for your whiteboard"
+                                   required
+                                   maxlength="200">
+                            <div class="form-text">
+                                Choose a clear, descriptive title that others will understand.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="is_public" 
+                                       name="is_public">
+                                <label class="form-check-label fw-bold" for="is_public">
+                                    <i class="fas fa-globe me-2"></i>Make this whiteboard public
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                <div class="mt-2">
+                                    <strong>Public:</strong> Anyone can view your whiteboard<br>
+                                    <strong>Private:</strong> Only you can view and edit
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Features available in your whiteboard:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li>Real-time collaboration with other users</li>
+                                        <li>Freehand drawing with customizable colors and thickness</li>
+                                        <li>Shapes (rectangles, circles, lines) and text tools</li>
+                                        <li>Eraser tool and undo/redo functionality</li>
+                                        <li>Export as PNG image</li>
+                                        <li>Auto-save functionality</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'whiteboard:home' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create Whiteboard
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Tips for Better Collaboration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-users text-primary me-2"></i>Collaboration</h6>
+                            <ul class="small">
+                                <li>Share the whiteboard URL with team members</li>
+                                <li>Use different colors to identify contributors</li>
+                                <li>Communicate via chat or video call while drawing</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-shield-alt text-success me-2"></i>Security</h6>
+                            <ul class="small">
+                                <li>Keep private whiteboards for sensitive content</li>
+                                <li>Only authenticated users can edit</li>
+                                <li>All data is encrypted and securely stored</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('title');
+    const publicSwitch = document.getElementById('is_public');
+    
+    // Auto-focus on title input
+    titleInput.focus();
+    
+    // Update form text based on public/private selection
+    publicSwitch.addEventListener('change', function() {
+        const formText = this.parentElement.nextElementSibling;
+        const statusDiv = formText.querySelector('div');
+        
+        if (this.checked) {
+            statusDiv.innerHTML = `
+                <strong class="text-success">Public whiteboard:</strong> Anyone can view your whiteboard<br>
+                <strong>Private:</strong> Only you can view and edit
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <strong>Public:</strong> Anyone can view your whiteboard<br>
+                <strong class="text-primary">Private whiteboard:</strong> Only you can view and edit
+            `;
+        }
+    });
+});
+</script>
+{% endblock %}

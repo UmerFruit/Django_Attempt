@@ -1,0 +1,78 @@
+{% extends 'whiteboard/base.html' %}
+
+{% block title %}Delete Whiteboard - Collaborative Whiteboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Delete Whiteboard
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-warning me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone!
+                    </div>
+                    
+                    <p>Are you sure you want to delete the whiteboard:</p>
+                    
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-draw-polygon me-2"></i>{{ whiteboard.title }}
+                            </h5>
+                            <p class="card-text text-muted mb-1">
+                                <i class="fas fa-user me-1"></i>Owner: {{ whiteboard.owner.username }}
+                            </p>
+                            <p class="card-text text-muted mb-1">
+                                <i class="fas fa-calendar me-1"></i>Created: {{ whiteboard.created_at|date:"M d, Y" }}
+                            </p>
+                            <p class="card-text text-muted mb-0">
+                                <i class="fas fa-clock me-1"></i>Last modified: {{ whiteboard.updated_at|timesince }} ago
+                            </p>
+                            {% if whiteboard.is_public %}
+                                <span class="badge bg-success mt-2">Public</span>
+                            {% else %}
+                                <span class="badge bg-secondary mt-2">Private</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <p class="mt-3">
+                        All drawing data, collaborations, and associated information will be permanently deleted.
+                    </p>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'whiteboard:view' whiteboard.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Delete Permanently
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add confirmation dialog
+    const deleteForm = document.querySelector('form');
+    deleteForm.addEventListener('submit', function(e) {
+        const confirmed = confirm('Are you absolutely sure you want to delete this whiteboard? This action cannot be undone.');
+        if (!confirmed) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'whiteboard/base.html' %}
+
+{% block title %}Home - Collaborative Whiteboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <div class="card">
+                <div class="card-body p-5">
+                    <h1 class="display-4 fw-bold text-primary mb-4">
+                        <i class="fas fa-draw-polygon me-3"></i>
+                        Collaborative Whiteboard
+                    </h1>
+                    <p class="lead text-muted mb-4">
+                        Create, draw, and collaborate in real-time with multiple users. 
+                        Secure, scalable, and built with modern web technologies.
+                    </p>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'whiteboard:create' %}" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-plus me-2"></i>Create New Whiteboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'whiteboard:register' %}" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-user-plus me-2"></i>Get Started
+                        </a>
+                        <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Real-time Collaboration</h5>
+                    <p class="card-text">Multiple users can draw simultaneously with live updates using WebSocket technology.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-palette fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Rich Drawing Tools</h5>
+                    <p class="card-text">Freehand drawing, shapes, text, colors, and eraser with customizable thickness.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Secure & Private</h5>
+                    <p class="card-text">User authentication, CSRF protection, and private/public whiteboard options.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Public Whiteboards -->
+    {% if public_whiteboards %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-globe me-2"></i>Public Whiteboards
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for whiteboard in public_whiteboards %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card whiteboard-card h-100" onclick="location.href='{% url 'whiteboard:view' whiteboard.pk %}'">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-truncate">
+                                                <i class="fas fa-draw-polygon me-2 text-primary"></i>
+                                                {{ whiteboard.title }}
+                                            </h6>
+                                            <p class="card-text text-muted small">
+                                                <i class="fas fa-user me-1"></i>{{ whiteboard.owner.username }}<br>
+                                                <i class="fas fa-clock me-1"></i>{{ whiteboard.updated_at|timesince }} ago
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- User's Whiteboards -->
+    {% if user.is_authenticated and user_whiteboards %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">
+                            <i class="fas fa-user me-2"></i>Your Whiteboards
+                        </h3>
+                        <a href="{% url 'whiteboard:create' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>New
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for whiteboard in user_whiteboards %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card whiteboard-card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title text-truncate mb-0">
+                                                    <i class="fas fa-draw-polygon me-2 text-primary"></i>
+                                                    {{ whiteboard.title }}
+                                                </h6>
+                                                {% if whiteboard.is_public %}
+                                                    <span class="badge bg-success">Public</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Private</span>
+                                                {% endif %}
+                                            </div>
+                                            <p class="card-text text-muted small mb-3">
+                                                <i class="fas fa-clock me-1"></i>{{ whiteboard.updated_at|timesince }} ago
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{% url 'whiteboard:view' whiteboard.pk %}" class="btn btn-primary btn-sm flex-grow-1">
+                                                    <i class="fas fa-eye me-1"></i>Open
+                                                </a>
+                                                <a href="{% url 'whiteboard:delete' whiteboard.pk %}" class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Getting Started for Anonymous Users -->
+    {% if not user.is_authenticated %}
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-body text-center p-5">
+                        <h3 class="mb-4">Ready to Start Drawing?</h3>
+                        <p class="text-muted mb-4">
+                            Join thousands of users creating and sharing whiteboards. 
+                            Sign up now to create your first collaborative whiteboard!
+                        </p>
+                        <a href="{% url 'whiteboard:register' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-rocket me-2"></i>Create Free Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

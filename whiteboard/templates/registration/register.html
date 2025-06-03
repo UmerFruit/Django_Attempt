@@ -1,0 +1,190 @@
+{% extends 'whiteboard/base.html' %}
+
+{% block title %}Register - Collaborative Whiteboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-2"></i>Username
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="text-danger small">
+                                    {{ form.username.errors.0 }}
+                                </div>
+                            {% else %}
+                                <div class="form-text">
+                                    {{ form.username.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                                <div class="text-danger small">
+                                    {{ form.password1.errors.0 }}
+                                </div>
+                            {% else %}
+                                <div class="form-text">
+                                    {{ form.password1.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                <i class="fas fa-lock me-2"></i>Confirm Password
+                            </label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                                <div class="text-danger small">
+                                    {{ form.password2.errors.0 }}
+                                </div>
+                            {% else %}
+                                <div class="form-text">
+                                    Enter the same password as before, for verification.
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors.0 }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <span class="text-muted">Already have an account?</span>
+                    <a href="{% url 'login' %}" class="text-decoration-none">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login here
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="text-center mb-3">
+                        <i class="fas fa-gift me-2"></i>What you get with your account
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-check text-success me-2"></i>Unlimited whiteboards</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Real-time collaboration</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Auto-save functionality</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-check text-success me-2"></i>Privacy controls</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Export to PNG</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Rich drawing tools</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus on username field
+    const usernameField = document.getElementById('{{ form.username.id_for_label }}');
+    if (usernameField) {
+        usernameField.focus();
+    }
+    
+    // Add Bootstrap classes to form fields
+    const formFields = document.querySelectorAll('input[type="text"], input[type="password"]');
+    formFields.forEach(field => {
+        field.classList.add('form-control');
+    });
+    
+    // Password strength indicator
+    const password1Field = document.getElementById('{{ form.password1.id_for_label }}');
+    if (password1Field) {
+        password1Field.addEventListener('input', function() {
+            const password = this.value;
+            const strengthIndicator = document.getElementById('password-strength') || createPasswordStrengthIndicator(this);
+            
+            let strength = 0;
+            let strengthText = '';
+            let strengthClass = '';
+            
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            switch (strength) {
+                case 0:
+                case 1:
+                    strengthText = 'Very Weak';
+                    strengthClass = 'bg-danger';
+                    break;
+                case 2:
+                    strengthText = 'Weak';
+                    strengthClass = 'bg-warning';
+                    break;
+                case 3:
+                    strengthText = 'Fair';
+                    strengthClass = 'bg-info';
+                    break;
+                case 4:
+                    strengthText = 'Good';
+                    strengthClass = 'bg-success';
+                    break;
+                case 5:
+                    strengthText = 'Strong';
+                    strengthClass = 'bg-success';
+                    break;
+            }
+            
+            strengthIndicator.className = `progress-bar ${strengthClass}`;
+            strengthIndicator.style.width = `${(strength / 5) * 100}%`;
+            strengthIndicator.textContent = strengthText;
+        });
+    }
+    
+    function createPasswordStrengthIndicator(passwordField) {
+        const strengthContainer = document.createElement('div');
+        strengthContainer.className = 'mt-2';
+        strengthContainer.innerHTML = `
+            <small class="text-muted">Password strength:</small>
+            <div class="progress" style="height: 8px;">
+                <div id="password-strength" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+        `;
+        passwordField.parentNode.appendChild(strengthContainer);
+        return document.getElementById('password-strength');
+    }
+});
+</script>
+{% endblock %}

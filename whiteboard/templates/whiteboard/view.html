@@ -1,0 +1,775 @@
+{% extends 'whiteboard/base.html' %}
+
+{% block title %}{{ whiteboard.title }} - Collaborative Whiteboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #f8f9fa;
+        overflow: hidden;
+    }
+    
+    .toolbar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+        padding: 15px;
+        margin: 10px;
+        position: fixed;
+        top: 80px;
+        left: 10px;
+        z-index: 1000;
+        width: 280px;
+    }
+    
+    .canvas-container {
+        position: fixed;
+        top: 80px;
+        left: 310px;
+        right: 10px;
+        bottom: 10px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .tool-section {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .tool-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .tool-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        background: white;
+        margin: 2px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    
+    .tool-button:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+    
+    .tool-button.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+    
+    .color-button {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid #dee2e6;
+        margin: 2px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .color-button:hover,
+    .color-button.active {
+        border-color: #333;
+        transform: scale(1.1);
+    }
+    
+    .range-input {
+        width: 100%;
+    }
+    
+    .status-bar {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    .online-users {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .user-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #28a745;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .cursor-indicator {
+        position: absolute;
+        pointer-events: none;
+        z-index: 999;
+        transition: all 0.1s ease;
+    }
+    
+    .cursor-label {
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-top: 15px;
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="tool-section">
+        <h6 class="mb-2"><i class="fas fa-tools me-2"></i>Tools</h6>
+        <div class="d-flex flex-wrap">
+            <button class="tool-button active" data-tool="pen" title="Pen">
+                <i class="fas fa-pen"></i>
+            </button>
+            <button class="tool-button" data-tool="eraser" title="Eraser">
+                <i class="fas fa-eraser"></i>
+            </button>
+            <button class="tool-button" data-tool="line" title="Line">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="tool-button" data-tool="rectangle" title="Rectangle">
+                <i class="far fa-square"></i>
+            </button>
+            <button class="tool-button" data-tool="circle" title="Circle">
+                <i class="far fa-circle"></i>
+            </button>
+            <button class="tool-button" data-tool="text" title="Text">
+                <i class="fas fa-font"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="tool-section">
+        <h6 class="mb-2"><i class="fas fa-palette me-2"></i>Colors</h6>
+        <div class="d-flex flex-wrap">
+            <div class="color-button active" data-color="#000000" style="background: #000000;" title="Black"></div>
+            <div class="color-button" data-color="#ff0000" style="background: #ff0000;" title="Red"></div>
+            <div class="color-button" data-color="#00ff00" style="background: #00ff00;" title="Green"></div>
+            <div class="color-button" data-color="#0000ff" style="background: #0000ff;" title="Blue"></div>
+            <div class="color-button" data-color="#ffff00" style="background: #ffff00;" title="Yellow"></div>
+            <div class="color-button" data-color="#ff00ff" style="background: #ff00ff;" title="Magenta"></div>
+            <div class="color-button" data-color="#00ffff" style="background: #00ffff;" title="Cyan"></div>
+            <div class="color-button" data-color="#orange" style="background: orange;" title="Orange"></div>
+            <div class="color-button" data-color="#purple" style="background: purple;" title="Purple"></div>
+            <div class="color-button" data-color="#brown" style="background: brown;" title="Brown"></div>
+            <div class="color-button" data-color="#gray" style="background: gray;" title="Gray"></div>
+            <div class="color-button" data-color="#white" style="background: white; border-color: #333;" title="White"></div>
+        </div>
+        <input type="color" id="custom-color" class="form-control form-control-sm mt-2" title="Custom Color">
+    </div>
+    
+    <div class="tool-section">
+        <h6 class="mb-2"><i class="fas fa-sliders-h me-2"></i>Brush Size</h6>
+        <input type="range" class="range-input" id="brush-size" min="1" max="50" value="5">
+        <div class="text-center mt-1"><span id="brush-size-display">5</span>px</div>
+    </div>
+    
+    <div class="tool-section">
+        <h6 class="mb-2"><i class="fas fa-cog me-2"></i>Actions</h6>
+        <div class="d-grid gap-2">
+            <button class="btn btn-outline-secondary btn-sm" id="undo-btn">
+                <i class="fas fa-undo me-1"></i>Undo
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="redo-btn">
+                <i class="fas fa-redo me-1"></i>Redo
+            </button>
+            <button class="btn btn-outline-danger btn-sm" id="clear-btn">
+                <i class="fas fa-trash me-1"></i>Clear All
+            </button>
+            {% if can_edit %}
+            <button class="btn btn-success btn-sm" id="save-btn">
+                <i class="fas fa-save me-1"></i>Save
+            </button>
+            {% endif %}
+            <button class="btn btn-primary btn-sm" id="export-btn">
+                <i class="fas fa-download me-1"></i>Export PNG
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Canvas Container -->
+<div class="canvas-container">
+    <canvas id="whiteboard-canvas"></canvas>
+</div>
+
+<!-- Status Bar -->
+<div class="status-bar">
+    <div class="d-flex align-items-center">
+        <span class="me-3">
+            <i class="fas fa-info-circle me-1"></i>
+            <strong>{{ whiteboard.title }}</strong>
+            {% if whiteboard.is_public %}
+                <span class="badge bg-success ms-2">Public</span>
+            {% else %}
+                <span class="badge bg-secondary ms-2">Private</span>
+            {% endif %}
+        </span>
+        {% if not can_edit %}
+            <span class="badge bg-warning">
+                <i class="fas fa-eye me-1"></i>View Only
+            </span>
+        {% endif %}
+    </div>
+    
+    <div class="online-users">
+        <span class="me-2">Online:</span>
+        <div id="user-indicators"></div>
+    </div>
+</div>
+
+<!-- WebSocket connection status -->
+<div id="connection-status" class="position-fixed" style="top: 90px; right: 20px; z-index: 1001;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Fabric.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+
+<script>
+// Whiteboard application
+class WhiteboardApp {
+    constructor() {
+        this.canvas = null;
+        this.socket = null;
+        this.currentTool = 'pen';
+        this.currentColor = '#000000';
+        this.brushSize = 5;
+        this.isDrawing = false;
+        this.undoStack = [];
+        this.redoStack = [];
+        this.maxUndoSteps = 20;
+        this.onlineUsers = new Set();
+        this.userCursors = new Map();
+        
+        this.initCanvas();
+        this.initWebSocket();
+        this.initEventListeners();
+        this.loadWhiteboardData();
+    }
+    
+    initCanvas() {
+        const canvasContainer = document.querySelector('.canvas-container');
+        const canvas = document.getElementById('whiteboard-canvas');
+        
+        // Set canvas size
+        canvas.width = canvasContainer.clientWidth;
+        canvas.height = canvasContainer.clientHeight;
+          // Initialize Fabric.js canvas
+        this.canvas = new fabric.Canvas('whiteboard-canvas', {
+            isDrawingMode: true,
+            freeDrawingBrush: new fabric.PencilBrush()
+        });
+        
+        // Configure brush to create stroke-only paths
+        this.canvas.freeDrawingBrush.width = this.brushSize;
+        this.canvas.freeDrawingBrush.color = this.currentColor;
+        
+        // Ensure paths are created with stroke and no fill
+        const originalOnPathCreated = this.canvas.freeDrawingBrush.onMouseUp;
+        this.canvas.freeDrawingBrush.onMouseUp = function(options) {
+            const result = originalOnPathCreated.call(this, options);
+            if (this.canvas._currentTransform && this.canvas._currentTransform.target) {
+                const path = this.canvas._currentTransform.target;
+                if (path.type === 'path') {
+                    path.set({
+                        fill: '',
+                        stroke: this.color,
+                        strokeWidth: this.width
+                    });
+                }
+            }
+            return result;
+        };
+          // Canvas event listeners
+        this.canvas.on('path:created', (e) => {
+            // Ensure the path has proper stroke properties and no fill
+            const path = e.path;
+            path.set({
+                fill: '',
+                stroke: this.currentColor,
+                strokeWidth: this.brushSize,
+                strokeLineCap: 'round',
+                strokeLineJoin: 'round'
+            });
+            this.canvas.renderAll();
+            
+            this.saveState();
+            this.broadcastDrawingUpdate('stroke_added', this.serializeCanvas());
+        });
+        
+        this.canvas.on('object:added', (e) => {
+            if (e.target.type !== 'path') {
+                this.saveState();
+                this.broadcastDrawingUpdate('object_added', this.serializeCanvas());
+            }
+        });
+        
+        // Mouse movement for cursor tracking
+        this.canvas.on('mouse:move', (e) => {
+            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                const pointer = this.canvas.getPointer(e.e);
+                this.socket.send(JSON.stringify({
+                    type: 'cursor_position',
+                    x: pointer.x,
+                    y: pointer.y
+                }));
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            this.resizeCanvas();
+        });
+    }
+    
+    initWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/whiteboard/{{ whiteboard.pk }}/`;
+        
+        this.socket = new WebSocket(wsUrl);
+        
+        this.socket.onopen = () => {
+            this.updateConnectionStatus('connected');
+            console.log('WebSocket connected');
+        };
+        
+        this.socket.onclose = () => {
+            this.updateConnectionStatus('disconnected');
+            console.log('WebSocket disconnected');
+            // Attempt to reconnect after 3 seconds
+            setTimeout(() => this.initWebSocket(), 3000);
+        };
+        
+        this.socket.onerror = (error) => {
+            this.updateConnectionStatus('error');
+            console.error('WebSocket error:', error);
+        };
+        
+        this.socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.handleWebSocketMessage(data);
+        };
+    }
+    
+    handleWebSocketMessage(data) {
+        switch(data.type) {
+            case 'whiteboard_data':
+                this.loadCanvasData(data.data);
+                break;
+            case 'drawing_update':
+                this.handleDrawingUpdate(data);
+                break;
+            case 'cursor_update':
+                this.updateUserCursor(data.user, data.x, data.y);
+                break;
+            case 'save_response':
+                this.showSaveStatus(data.success);
+                break;
+        }
+    }
+    
+    handleDrawingUpdate(data) {
+        // Temporarily disable event listeners to prevent loops
+        this.canvas.off('path:created');
+        this.canvas.off('object:added');
+        
+        try {
+            this.loadCanvasData(data.data);
+        } catch (error) {
+            console.error('Error handling drawing update:', error);
+        }
+        
+        // Re-enable event listeners
+        this.canvas.on('path:created', (e) => {
+            this.saveState();
+            this.broadcastDrawingUpdate('stroke_added', this.serializeCanvas());
+        });
+        
+        this.canvas.on('object:added', (e) => {
+            if (e.target.type !== 'path') {
+                this.saveState();
+                this.broadcastDrawingUpdate('object_added', this.serializeCanvas());
+            }
+        });
+    }
+    
+    initEventListeners() {
+        // Tool buttons
+        document.querySelectorAll('.tool-button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.selectTool(e.target.closest('.tool-button').dataset.tool);
+            });
+        });
+        
+        // Color buttons
+        document.querySelectorAll('.color-button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.selectColor(e.target.dataset.color);
+            });
+        });
+        
+        // Custom color picker
+        document.getElementById('custom-color').addEventListener('change', (e) => {
+            this.selectColor(e.target.value);
+        });
+        
+        // Brush size
+        const brushSizeSlider = document.getElementById('brush-size');
+        const brushSizeDisplay = document.getElementById('brush-size-display');
+        
+        brushSizeSlider.addEventListener('input', (e) => {
+            this.brushSize = parseInt(e.target.value);
+            brushSizeDisplay.textContent = this.brushSize;
+            this.canvas.freeDrawingBrush.width = this.brushSize;
+        });
+        
+        // Action buttons
+        document.getElementById('undo-btn').addEventListener('click', () => this.undo());
+        document.getElementById('redo-btn').addEventListener('click', () => this.redo());
+        document.getElementById('clear-btn').addEventListener('click', () => this.clearCanvas());
+        document.getElementById('export-btn').addEventListener('click', () => this.exportCanvas());
+        
+        {% if can_edit %}
+        document.getElementById('save-btn').addEventListener('click', () => this.saveWhiteboard());
+        {% endif %}
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'z':
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            this.redo();
+                        } else {
+                            this.undo();
+                        }
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        {% if can_edit %}
+                        this.saveWhiteboard();
+                        {% endif %}
+                        break;
+                }
+            }
+        });
+    }
+    
+    selectTool(tool) {
+        this.currentTool = tool;
+        
+        // Update UI
+        document.querySelectorAll('.tool-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tool="${tool}"]`).classList.add('active');
+        
+        // Update canvas mode
+        switch(tool) {
+            case 'pen':
+                this.canvas.isDrawingMode = true;
+                this.canvas.selection = false;
+                this.canvas.freeDrawingBrush = new fabric.PencilBrush();
+                this.canvas.freeDrawingBrush.width = this.brushSize;
+                this.canvas.freeDrawingBrush.color = this.currentColor;
+                break;
+            case 'eraser':
+                this.canvas.isDrawingMode = true;
+                this.canvas.selection = false;
+                this.canvas.freeDrawingBrush = new fabric.EraserBrush();
+                this.canvas.freeDrawingBrush.width = this.brushSize;
+                break;
+            default:
+                this.canvas.isDrawingMode = false;
+                this.canvas.selection = true;
+                break;
+        }
+    }
+    
+    selectColor(color) {
+        this.currentColor = color;
+        
+        // Update UI
+        document.querySelectorAll('.color-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const colorBtn = document.querySelector(`[data-color="${color}"]`);
+        if (colorBtn) {
+            colorBtn.classList.add('active');
+        }
+        
+        // Update brush color
+        if (this.canvas.freeDrawingBrush && this.currentTool === 'pen') {
+            this.canvas.freeDrawingBrush.color = color;
+        }
+    }
+    
+    saveState() {
+        const state = JSON.stringify(this.canvas.toJSON());
+        this.undoStack.push(state);
+        
+        if (this.undoStack.length > this.maxUndoSteps) {
+            this.undoStack.shift();
+        }
+        
+        this.redoStack = [];
+    }
+    
+    undo() {
+        if (this.undoStack.length > 0) {
+            const currentState = JSON.stringify(this.canvas.toJSON());
+            this.redoStack.push(currentState);
+            
+            const previousState = this.undoStack.pop();
+            this.canvas.loadFromJSON(previousState, () => {
+                this.canvas.renderAll();
+                this.broadcastDrawingUpdate('undo', this.serializeCanvas());
+            });
+        }
+    }
+    
+    redo() {
+        if (this.redoStack.length > 0) {
+            const currentState = JSON.stringify(this.canvas.toJSON());
+            this.undoStack.push(currentState);
+            
+            const nextState = this.redoStack.pop();
+            this.canvas.loadFromJSON(nextState, () => {
+                this.canvas.renderAll();
+                this.broadcastDrawingUpdate('redo', this.serializeCanvas());
+            });
+        }
+    }
+    
+    clearCanvas() {
+        if (confirm('Are you sure you want to clear the entire whiteboard?')) {
+            this.saveState();
+            this.canvas.clear();
+            this.broadcastDrawingUpdate('clear', this.serializeCanvas());
+        }
+    }
+    
+    exportCanvas() {
+        const link = document.createElement('a');
+        link.download = '{{ whiteboard.title|slugify }}.png';
+        link.href = this.canvas.toDataURL('image/png');
+        link.click();
+    }
+    
+    saveWhiteboard() {
+        const data = this.serializeCanvas();
+        
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({
+                type: 'save_whiteboard',
+                data: data
+            }));
+        } else {
+            // Fallback to AJAX
+            this.saveViaAjax(data);
+        }
+    }
+    
+    saveViaAjax(data) {
+        fetch('{% url "whiteboard:save" whiteboard.pk %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            this.showSaveStatus(data.success);
+        })
+        .catch(error => {
+            console.error('Save error:', error);
+            this.showSaveStatus(false);
+        });
+    }
+    
+    showSaveStatus(success) {
+        const statusEl = document.getElementById('connection-status');
+        statusEl.innerHTML = success 
+            ? '<div class="alert alert-success alert-sm">✓ Saved</div>'
+            : '<div class="alert alert-danger alert-sm">✗ Save failed</div>';
+        
+        setTimeout(() => {
+            statusEl.innerHTML = '';
+        }, 3000);
+    }
+      serializeCanvas() {
+        const canvasData = this.canvas.toJSON();
+        
+        // Process objects to ensure proper stroke/fill properties
+        if (canvasData.objects) {
+            canvasData.objects.forEach(obj => {
+                // For path objects (freehand drawing), ensure they're stroke-only
+                if (obj.type === 'path') {
+                    obj.fill = '';
+                    if (!obj.stroke) {
+                        obj.stroke = obj.color || this.currentColor;
+                    }
+                    if (!obj.strokeWidth) {
+                        obj.strokeWidth = this.brushSize;
+                    }
+                    obj.strokeLineCap = 'round';
+                    obj.strokeLineJoin = 'round';
+                }
+            });
+        }
+        
+        return {
+            version: canvasData.version,
+            objects: canvasData.objects
+        };
+    }
+      loadCanvasData(data) {
+        console.log('loadCanvasData called with:', data);
+        if (data && data.objects) {
+            console.log('Found objects to load:', data.objects.length);
+            this.canvas.loadFromJSON(data, () => {
+                console.log('Canvas loaded successfully');
+                this.canvas.renderAll();
+                console.log('Canvas rendered');
+            }, (error) => {
+                console.error('Error loading canvas from JSON:', error);
+            });
+        } else {
+            console.log('No objects found in data');
+        }
+    }
+      loadWhiteboardData() {
+        try {
+            const data = {{ drawing_data|safe }};
+            console.log('Loading whiteboard data:', data);
+            console.log('Data type:', typeof data);
+            console.log('Data has objects:', data && data.objects ? data.objects.length : 'no objects');
+            if (data && data.objects) {
+                this.loadCanvasData(data);
+            } else {
+                console.log('No valid data to load');
+            }
+        } catch (error) {
+            console.error('Error loading whiteboard data:', error);
+        }
+    }
+    
+    broadcastDrawingUpdate(action, data) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({
+                type: 'drawing_update',
+                action: action,
+                data: data
+            }));
+        }
+    }
+    
+    updateConnectionStatus(status) {
+        const statusEl = document.getElementById('connection-status');
+        
+        switch(status) {
+            case 'connected':
+                statusEl.innerHTML = '<div class="alert alert-success alert-sm">🟢 Connected</div>';
+                break;
+            case 'disconnected':
+                statusEl.innerHTML = '<div class="alert alert-warning alert-sm">🟡 Reconnecting...</div>';
+                break;
+            case 'error':
+                statusEl.innerHTML = '<div class="alert alert-danger alert-sm">🔴 Connection Error</div>';
+                break;
+        }
+    }
+    
+    updateUserCursor(username, x, y) {
+        const cursorId = `cursor-${username}`;
+        let cursor = document.getElementById(cursorId);
+        
+        if (!cursor) {
+            cursor = document.createElement('div');
+            cursor.id = cursorId;
+            cursor.className = 'cursor-indicator';
+            cursor.innerHTML = `
+                <i class="fas fa-mouse-pointer" style="color: #667eea;"></i>
+                <div class="cursor-label">${username}</div>
+            `;
+            document.body.appendChild(cursor);
+        }
+        
+        const canvasContainer = document.querySelector('.canvas-container');
+        const rect = canvasContainer.getBoundingClientRect();
+        
+        cursor.style.left = (rect.left + x) + 'px';
+        cursor.style.top = (rect.top + y) + 'px';
+        
+        // Auto-hide cursor after 3 seconds of inactivity
+        clearTimeout(cursor.hideTimeout);
+        cursor.style.display = 'block';
+        cursor.hideTimeout = setTimeout(() => {
+            cursor.style.display = 'none';
+        }, 3000);
+    }
+    
+    resizeCanvas() {
+        const canvasContainer = document.querySelector('.canvas-container');
+        this.canvas.setDimensions({
+            width: canvasContainer.clientWidth,
+            height: canvasContainer.clientHeight
+        });
+    }
+}
+
+// Initialize the whiteboard application
+document.addEventListener('DOMContentLoaded', function() {
+    window.whiteboardApp = new WhiteboardApp();
+});
+
+// Auto-save every 30 seconds if user can edit
+{% if can_edit %}
+setInterval(() => {
+    if (window.whiteboardApp) {
+        window.whiteboardApp.saveWhiteboard();
+    }
+}, 30000);
+{% endif %}
+</script>
+{% endblock %}
